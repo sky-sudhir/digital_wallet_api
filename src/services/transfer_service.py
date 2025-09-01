@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models import User
 from src.models.transaction import Transaction
-from src.schemas.transfer_schema import TransferRequest
+from src.schemas.transfer_schema import TransferError, TransferRequest
 
 
 class TransferService:
@@ -32,7 +32,12 @@ class TransferService:
 
         # Check if sender has enough balance
         if sender_user.balance < transfer_detail.amount:
-            raise HTTPException(status_code=400, detail="Insufficient balance")
+            exception_response=TransferError(
+              error="Insufficient balance",
+              current_balance=sender_user.balance,
+              required_amount=transfer_detail.amount
+            )
+            raise HTTPException(status_code=400, detail=exception_response)
 
         if isinstance(transfer_detail.amount, float):
             transfer_detail.amount = Decimal(transfer_detail.amount)
