@@ -1,6 +1,6 @@
 from decimal import Decimal
 from fastapi import HTTPException
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models import Transaction, User
@@ -62,4 +62,6 @@ class TransactionService:
         
         query = select(Transaction).where(Transaction.user_id == user_id)
         result = await self.session.execute(query.offset((page - 1) * limit).limit(limit))
-        return result.scalars().all()
+
+        total_count = await self.session.scalar(select(func.count()).select_from(query))
+        return {"total": total_count, "transactions": result.scalars().all(), "page": page, "limit": limit}
